@@ -9,8 +9,8 @@ class Patientsdetails(models.Model):
     age = models.IntegerField(null=False)
     gender = models.CharField(max_length=15,null=False)
     procedure = models.CharField(max_length=200,null=True)
-    mobile = models.CharField(max_length=20,null=False)
-    patient_email = models.EmailField()
+    mobile = models.CharField(max_length=20,null=False,unique=True)
+    patient_email = models.EmailField(unique=True)
     referred = models.CharField(max_length=100)
 
     def __str__(self):
