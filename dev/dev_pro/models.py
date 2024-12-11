@@ -69,5 +69,5 @@ class NewPatientreports(models.Model):
     time = models.TimeField()
 
     def __str__(self):
-        return str(self.patient_details_id)
+        return str(self.date)
 

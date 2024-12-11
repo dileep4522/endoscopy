@@ -1,5 +1,5 @@
 import socket
-
+from dev_pro.models import Patientsdetails
 
 class DatabaseRouter:
     @classmethod
@@ -11,13 +11,15 @@ class DatabaseRouter:
             return False
 
     @classmethod
-    def db_for_read(cls, model, **hints):
+    def db_for_read(cls, model=None, **hints):
         return 'default' if cls.is_internet_available() else 'fallback'
+        # return ['default',Patientsdetails] if cls.is_internet_available() else ['fallback',Patientsdetails]
+
 
     @classmethod
-    def db_for_write(cls, model, **hints):
-        return 'default' if cls.is_internet_available() else 'fallback'
+    def db_for_write(cls, model=None, **hints):
 
+        return 'default' if cls.is_internet_available() else 'fallback'
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         return db in ['default', 'fallback']
 

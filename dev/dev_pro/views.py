@@ -31,17 +31,31 @@ from .serializers import LoginSerializer, ReportSerializers,PatientDetailSeriali
 def add_patient(request):
     # current_user = request.user
     # if request.user.is_authenticated:
-        patient_email=Patientsdetails.objects.filter(patient_email=request.data.get('patient_email'))
-        if request.method == 'POST':
+    if request.method == 'POST':
+
+        if DatabaseRouter.db_for_write() == 'default':
+            print("if")
+            db = DatabaseRouter.db_for_write(Patientsdetails)  # Pass the model
+            patient_email = Patientsdetails.objects.using(db).filter(patient_email=request.data.get('patient_email'))
             if patient_email.exists():
                 return JsonResponse({"status": "patient_already_exists"})
             serializer = PatientsdetailsSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return JsonResponse({"status": "patient_added_successfully"})
 
-            else:
-                return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        elif DatabaseRouter.db_for_write() == 'fallback':
+            print('else')
+            db = DatabaseRouter.db_for_write(NewPatientsdetails)  # Pass the model
+            patient_email = NewPatientsdetails.objects.using(db).filter(patient_email=request.data.get('patient_email'))
+            if patient_email.exists():
+                return JsonResponse({"status": "patient_already_exists"})
+            serializer = newPatientsdetailsSerializer(data=request.data)
+        else:
+            pass
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse({"status": "patient_added_successfully"})
+
+        else:
+            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     # else:
     #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -62,36 +76,85 @@ def delete_patients(request):
         return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
+# def patient_report_file(request,patient_id):
 def patient_report_file(request):
-    if request.user.is_authenticated:
-        reports = Patientreports.objects.filter(patient_details_id=request.query_params.get("patient_id"))
-        if reports.exists():
-            serializer = PatientreportsSerializer(reports, many=True)
-            return JsonResponse(
-                {"status": "Patient_report_file_retrieved_successfully", "patient_reports": serializer.data},
-                status=status.HTTP_200_OK  # Correct usage of status code
-            )
-        else:
-            return JsonResponse(
-                {"status": "No_reports_found_for_this_patient."},
-                status=status.HTTP_404_NOT_FOUND  # Correct usage of status code
-            )
+
+    # if request.user.is_authenticated:
+    params_id=request.query_params.get("patient_id")
+
+    if DatabaseRouter.db_for_read() == 'default':
+        print("if")
+        db = DatabaseRouter.db_for_read(Patientreports)  # Pass the model
+        reports = Patientreports.objects.filter(patient_details_id_id=params_id)
+        serializer = PatientreportsSerializer(reports, many=True)
+        resultant=serializer.data
+
+    elif DatabaseRouter.db_for_read() =='fallback':
+        print('else')
+        db = DatabaseRouter.db_for_read(NewPatientreports)  # Pass the model
+        reports = Patientreports.objects.filter(patient_details_id_id=params_id)
+        serializer = PatientreportsSerializer(reports, many=True)
+        newreports = NewPatientreports.objects.filter(patient_details_id_id=params_id)
+        newserializer = newPatientreportsSerializer(newreports, many=True)
+        resultant = serializer.data + newserializer.data
+
+
     else:
-        return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+        pass
+
+    if resultant:
+
+        return JsonResponse(
+            {"patient_reports":resultant},
+            status=status.HTTP_200_OK  # Correct usage of status code
+        )
+    else:
+        return JsonResponse(
+            {"status": "No_reports_found_for_this_patient."},
+            status=status.HTTP_404_NOT_FOUND  # Correct usage of status code
+        )
+
+
+
+    # else:
+    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['POST'])
 def patient_save_report(request):
-    if request.user.is_authenticated:
-        if request.method == 'POST':
-            serializer = Patient_save_report(data = request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return JsonResponse({'status':'successfully_added_Patient_report'})
-            else:
-                return JsonResponse({'status':'please_add_valid_id_or_valid_Report'})
-    else:
-        return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+    # if request.user.is_authenticated:
+    #     if request.method == 'POST':
+    #         serializer = Patient_save_report(data = request.data)
+
+
+
+    if request.method == 'POST':
+
+
+
+
+        if DatabaseRouter.db_for_write() == 'default':
+            print("if")
+            db = DatabaseRouter.db_for_write(Patientreports)  # Pass the model
+            serializer = Patient_save_report(data=request.data)
+
+
+
+        elif DatabaseRouter.db_for_write() == 'fallback':
+            print('else')
+            db = DatabaseRouter.db_for_write(NewPatientreports)  # Pass the model
+            serializer = newPatient_save_report(data=request.data)
+
+        else:
+            pass
+
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse({'status':'successfully_added_Patient_report'})
+        else:
+            return JsonResponse({'status':'please_add_valid_id_or_valid_Report'})
+    # else:
+    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
 def login_view(request):
@@ -208,12 +271,36 @@ def update_password(request):
 
 @api_view(['GET'])
 def patient_list(request):
-    if request.user.is_authenticated:
-        patients = Patientsdetails.objects.all()
-        serializer = PatientDetailSerializers(patients,many=True)
-        return Response(serializer.data)
+    # if request.user.is_authenticated:
+    if DatabaseRouter.db_for_write() == 'default':
+        print("if")
+        db = DatabaseRouter.db_for_read(Patientsdetails)  # Pass the model
+        patients = Patientsdetails.objects.using(db).all()
+        serializer = PatientDetailSerializers(patients, many=True)
+        result=serializer.data
+    elif DatabaseRouter.db_for_write() == 'fallback':
+        print("elif")
+        newdb = DatabaseRouter.db_for_read(NewPatientsdetails)  # Pass the model
+        newpatients = NewPatientsdetails.objects.using(newdb).all()
+        newserializer = newPatientDetailSerializers(newpatients, many=True)
+        db = DatabaseRouter.db_for_read(Patientsdetails)  # Pass the model
+        patients = Patientsdetails.objects.using(db).all()
+        serializer = PatientDetailSerializers(patients, many=True)
+        print('serializer.data',serializer.data)
+        print('newserializer.data',newserializer.data)
+
+        result = serializer.data + newserializer.data
+        print('result...........fallback',result)
+
+
     else:
-        return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+        pass
+
+
+
+    return Response(result)
+    # else:
+    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 @api_view(['POST'])
 def logout_view(request):
         logout(request)
@@ -227,7 +314,16 @@ class WorkersListAPIView(APIView):
     def get(self, request, *args, **kwargs):
         print("getttt WorkersListAPIView")
         # try:
-        db = DatabaseRouter.db_for_read(Patientsdetails)  # Pass the model
+        print('db', DatabaseRouter.db_for_read())
+        if DatabaseRouter.db_for_read() == 'default':
+            print("if")
+            db = DatabaseRouter.db_for_read(Patientsdetails)  # Pass the model
+        elif DatabaseRouter.db_for_read() == 'fallback':
+            print('else')
+            db = DatabaseRouter.db_for_read(Patientsdetails)
+        # db = DatabaseRouter.db_for_read()[0](DatabaseRouter.db_for_read()[1])  # Pass the model
+
+
         data = Patientsdetails.objects.using(db).all()
         serializer = patient_detailsSerializer(data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

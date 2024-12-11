@@ -5,11 +5,17 @@ from .models import Patientreports,Patientsdetails,UserDetails
 import random
 
 from rest_framework import serializers
-from .models import Patientsdetails
+from .models import *
 
 class PatientsdetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patientsdetails
+        fields = '__all__'
+
+
+class newPatientsdetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NewPatientsdetails
         fields = '__all__'
 
 class PatientreportsSerializer(serializers.ModelSerializer):
@@ -19,10 +25,25 @@ class PatientreportsSerializer(serializers.ModelSerializer):
         fields = ['id', 'patient_name', 'report_file', 'date', 'time']
 
 
+
+class newPatientreportsSerializer(serializers.ModelSerializer):
+    patient_name = serializers.CharField(source='patient_details_id.patient_name')
+    class Meta:
+        model = NewPatientreports
+        fields = ['id', 'patient_name', 'report_file', 'date', 'time']
+
+
+
 class Patient_save_report(serializers.ModelSerializer):
     class Meta:
         model = Patientreports
         fields = '__all__'
+
+class newPatient_save_report(serializers.ModelSerializer):
+    class Meta:
+        model = NewPatientreports
+        fields = '__all__'
+
 
 class ReportSerializers(serializers.ModelSerializer):
     class Meta:
@@ -33,6 +54,11 @@ class ReportSerializers(serializers.ModelSerializer):
 class PatientDetailSerializers(serializers.ModelSerializer):
     class Meta:
         model = Patientsdetails
+        fields = '__all__'
+
+class newPatientDetailSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = NewPatientsdetails
         fields = '__all__'
 
 class LoginSerializer(serializers.ModelSerializer):
