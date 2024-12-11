@@ -129,3 +129,9 @@ class PasswordUpdateSerializer(serializers.Serializer):
 
 
         return attrs
+
+
+class patient_detailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Patientsdetails
+        fields = '__all__'

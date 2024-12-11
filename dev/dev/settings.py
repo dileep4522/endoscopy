@@ -89,7 +89,15 @@ WSGI_APPLICATION = 'dev.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'endoscopy_db',  # change it databasename
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'Sunil2662',
+        'HOST': 'ytdatabase.c98k4qo8soa0.ap-south-1.rds.amazonaws.com',
+        'PORT': '5432',
+    },
+    'fallback': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'multi_db',  # change it databasename
         'USER': 'postgres',  # change it database username
         'PASSWORD': '6304882347',  # change user database password
         'HOST': '192.168.29.185',
@@ -97,6 +105,8 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+DATABASE_ROUTERS = ['dev.database_router.DatabaseRouter']
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

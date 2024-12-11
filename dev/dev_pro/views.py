@@ -6,6 +6,8 @@ from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 from rest_framework.decorators import api_view
 from rest_framework import status
+from rest_framework.views import APIView
+
 from .models import *
 from .serializers import *
 
@@ -18,6 +20,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import *
 import random
+from dev.database_router import DatabaseRouter
 from .serializers import LoginSerializer, ReportSerializers,PatientDetailSerializers,RegistrationSerializer,UserDetailsSerializer,EmailVerificationSerializer,PasswordUpdateSerializer
 
 
@@ -215,3 +218,19 @@ def patient_list(request):
 def logout_view(request):
         logout(request)
         return Response({"message": "Successfully_logged_out."}, status=status.HTTP_200_OK)
+
+
+
+
+class WorkersListAPIView(APIView):
+
+    def get(self, request, *args, **kwargs):
+        print("getttt WorkersListAPIView")
+        # try:
+        db = DatabaseRouter.db_for_read(Patientsdetails)  # Pass the model
+        data = Patientsdetails.objects.using(db).all()
+        serializer = patient_detailsSerializer(data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        # except Exception as e:
+        #     print("eeeee",e)
+
