@@ -205,12 +205,12 @@ def update_password(request):
 
 @api_view(['GET'])
 def patient_list(request):
-    if request.user.is_authenticated:
+    # if request.user.is_authenticated:
         patients = Patientsdetails.objects.all()
         serializer = PatientDetailSerializers(patients,many=True)
         return Response(serializer.data)
-    else:
-        return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+    # else:
+        # return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 @api_view(['POST'])
 def logout_view(request):
         logout(request)
