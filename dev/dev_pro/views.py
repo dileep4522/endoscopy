@@ -44,7 +44,7 @@ def add_patient(request):
 
 @api_view(['DELETE'])
 def delete_patients(request):
-    # if request.user.is_authenticated:
+    if request.user.is_authenticated:
         ids_to_delete = request.data.get('ids', [])  # Expects a list of ids to delete
         if not ids_to_delete:
             return JsonResponse({"status": "No_IDs_provided"}, status=status.HTTP_400_BAD_REQUEST)
@@ -55,8 +55,8 @@ def delete_patients(request):
             return JsonResponse({"status": "Patients_deleted_successfully"}, status=status.HTTP_204_NO_CONTENT)
         else:
             return JsonResponse({"status": "No_patients_found_with_the_provided_IDs"}, status=status.HTTP_404_NOT_FOUND)
-    # else:
-    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
 def patient_report_file(request):
@@ -102,6 +102,10 @@ def login_view(request):
             print("Password:",password)
 
             user = authenticate(username=username,password=password)
+            print('user',user)
+
+            print(request)
+            print(request.user)
 
             if user is not None:
                 login(request, user)
@@ -129,7 +133,7 @@ def register_view(request):
 
 @api_view(['POST'])
 def email_verification(request):
-    # if request.user.is_authenticated:
+    if request.user.is_authenticated:
         serializer = EmailVerificationSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
@@ -153,13 +157,13 @@ def email_verification(request):
                 return Response({"error": "User_with_this_email_does_not_exist."}, status=status.HTTP_404_NOT_FOUND)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    # else:
-    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['POST'])
 def validate_otp(request):
-    # if request.user.is_authenticated:
+    if request.user.is_authenticated:
         otp = request.data.get('otp')
 
         if not otp:
@@ -173,13 +177,13 @@ def validate_otp(request):
 
         except UserDetails.DoesNotExist:
             return Response({"error": "Invalid_OTP."}, status=status.HTTP_400_BAD_REQUEST)
-    # else:
-    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['POST'])
 def update_password(request):
-    # if request.user.is_authenticated:
+    if request.user.is_authenticated:
         email = request.data.get('email')
         password = request.data.get('password')
         confirm_password = request.data.get('confirm_password')
@@ -200,17 +204,19 @@ def update_password(request):
 
         except User.DoesNotExist:
             return Response({"error": "User_with_this_email_does_not_exist."}, status=status.HTTP_404_NOT_FOUND)
-    # else:
-    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['GET'])
 def patient_list(request):
-    if request.user.is_authenticated:
+    # if request.user.is_authenticated:
+    #     print(request.user)
+
         patients = Patientsdetails.objects.all()
         serializer = PatientDetailSerializers(patients,many=True)
         return Response(serializer.data)
-    else:
-        return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+    # else:
+    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 @api_view(['POST'])
 def logout_view(request):
         logout(request)

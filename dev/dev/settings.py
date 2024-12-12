@@ -60,6 +60,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Frontend address
     # "http://192.168.0.129",
+    "http://192.168.29.44:3000", #rockstar
     "http://192.168.29.185",# Add other allowed origins if needed
 ]
 CORS_ALLOW_CREDENTIALS=True
