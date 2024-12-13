@@ -1,3 +1,4 @@
+import os
 from asyncio import current_task
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -22,7 +23,7 @@ from .models import *
 import random
 from dev.database_router import DatabaseRouter
 from .serializers import LoginSerializer, ReportSerializers,PatientDetailSerializers,RegistrationSerializer,UserDetailsSerializer,EmailVerificationSerializer,PasswordUpdateSerializer
-
+from .utils import upload_file
 
 
 
@@ -120,41 +121,161 @@ def patient_report_file(request):
     #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+# @api_view(['POST'])
+# def patient_save_report(request):
+#     # if request.user.is_authenticated:
+#     #     if request.method == 'POST':
+#     # serializer = Patient_save_report(data = request.data)
+#
+#     if request.method == 'POST':
+#
+#         if DatabaseRouter.db_for_write() == 'default':
+#             print("if")
+#             db = DatabaseRouter.db_for_write(Patientreports)  # Pass the model
+#             serializer = Patient_save_report(data=request.data)
+#             # s3_object_key = f"patients/{patient_id}/{os.path.basename(pdf_file_path)}"
+#             #
+#             # # Upload file to S3
+#             # file_url = upload_file_to_s3(pdf_file_path, settings.AWS_STORAGE_BUCKET_NAME, s3_object_key)
+#
+#
+#
+#         elif DatabaseRouter.db_for_write() == 'fallback':
+#             print('else')
+#             db = DatabaseRouter.db_for_write(NewPatientreports)  # Pass the model
+#             serializer = newPatient_save_report(data=request.data)
+#
+#         else:
+#             pass
+#
+#         if serializer.is_valid():
+#             serializer.save()
+#             return JsonResponse({'status':'successfully_added_Patient_report'})
+#         else:
+#             return JsonResponse({'status':'please_add_valid_id_or_valid_Report'})
+#     # else:
+#     #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 @api_view(['POST'])
 def patient_save_report(request):
-    # if request.user.is_authenticated:
-    #     if request.method == 'POST':
-    #         serializer = Patient_save_report(data = request.data)
-
-
-
     if request.method == 'POST':
+        # Get data from the request
+        patient_details_id = request.data.get('patient_details_id')
+        pdf_file_path1 = request.data.get('pdf_file_path')
+        print('pdf_file_path',pdf_file_path1)
+
+        file_path = r'C:/Users/DeLL/Downloads/'
+
+        pdf_file_path=file_path+str(pdf_file_path1)
+
+        print('pdf_file_path//////',pdf_file_path)
 
 
 
+        # Validate required fields
+        if not patient_details_id or not pdf_file_path:
+            return JsonResponse(
+                {"status": "patient_details_id and pdf_file_path are required."},
+                status=400
+            )
+
+        # Check if the file exists locally
+
+        print(".................",os.path.exists(pdf_file_path))
+        if not os.path.exists(pdf_file_path):
+            return JsonResponse(
+                {"status": "The provided file path does not exist."},
+                status=400
+            )
+
+        # Generate current date and time
+        current_date = now().date()
+        current_time = now().time()
 
         if DatabaseRouter.db_for_write() == 'default':
             print("if")
-            db = DatabaseRouter.db_for_write(Patientreports)  # Pass the model
-            serializer = Patient_save_report(data=request.data)
+            db = DatabaseRouter.db_for_write(Patientreports)  # Use the default model
+            # serializer = Patient_save_report(data=request.data)
+            # print("serializer",serializer)
+            # serializer["date"]=current_date
+            # serializer["time"]=current_time
+            # print("serializer",serializer.data)
+
+            # Construct the S3 object key for the default model
+            s3_object_key = f"patients_{patient_details_id}_{pdf_file_path}"
+            print("s3_object_key",s3_object_key)
+
+            # Upload file to S3
+            # file_url = upload_file_to_s3(pdf_file_path, settings.AWS_STORAGE_BUCKET_NAME, s3_object_key)
+            file_url = upload_file(pdf_file_path, "samplebucketautomac2", object_name=str(pdf_file_path1),region=None)
+            print('file_url',file_url)
+            if "Error" in file_url:
+                return JsonResponse({"status": file_url}, status=500)
+
+            # Save the data in the default model
+
+            # if serializer.is_valid():
+            #     serializer.save(report_file=file_url, date=current_date, time=current_time)
+            #     return JsonResponse({
+            #         'status': 'successfully_added_Patient_report',
+            #         'file_url': file_url
+            #     }, status=201)
+            if patient_details_id and pdf_file_path:
+                report = Patientreports.objects.create(
+                    patient_details_id_id=patient_details_id,
+                    report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/'+str(file_url),
+                    date=current_date,
+                    time=current_time
+                )
+                report.save()
+                return JsonResponse({'status': 'report_created_successfully'}, status=200)
 
 
+            else:
+                return JsonResponse({'status': 'please_add_valid_id_or_valid_Report'}, status=400)
 
         elif DatabaseRouter.db_for_write() == 'fallback':
-            print('else')
-            db = DatabaseRouter.db_for_write(NewPatientreports)  # Pass the model
+            print("else")
+            db = DatabaseRouter.db_for_write(NewPatientreports)  # Use the fallback model
+
             serializer = newPatient_save_report(data=request.data)
+            print('serializer',serializer.data)
+
+            # Construct the S3 object key for the fallback model
+            # s3_object_key = f"endo_files/{patient_details_id}/{os.path.basename(pdf_file_path)}"
+            #
+            # # Upload file to S3
+            # file_url = upload_file_to_s3(pdf_file_path, settings.AWS_STORAGE_BUCKET_NAME, s3_object_key)
+
+            # if "Error" in file_url:
+            #     return JsonResponse({"status": file_url}, status=500)
+
+            # Save the data in the fallback model
+            report = NewPatientreports.objects.create(
+                patient_details_id_id=patient_details_id,
+                report_file=file_url,
+                date=current_date,
+                time=current_time
+            )
+            report.save()
+
+            return JsonResponse({
+                'status': 'successfully_added_Patient_report',
+                'file_url': file_url
+            }, status=201)
 
         else:
-            pass
+            return JsonResponse({"status": "Database router error."}, status=500)
 
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse({'status':'successfully_added_Patient_report'})
-        else:
-            return JsonResponse({'status':'please_add_valid_id_or_valid_Report'})
-    # else:
-    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+
+
+
+
+
+
 
 @api_view(['POST'])
 def login_view(request):
