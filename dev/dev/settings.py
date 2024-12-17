@@ -61,6 +61,8 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Frontend address
     "http://192.168.0.129",
+    "http://192.168.29.74:3000",
+    "http://192.168.29.44:3000",
     # "http://192.168.29.185",# Add other allowed origins if needed
 ]
 CORS_ALLOW_CREDENTIALS=True
@@ -69,7 +71,9 @@ ROOT_URLCONF = 'dev.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            # os.path.join(BASE_DIR,'build')
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
