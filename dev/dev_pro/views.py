@@ -190,13 +190,13 @@ def patient_save_report(request):
             )
 
         # Generate current date and time
-        current_date = now().date()
-        current_time = now().time()
+        # current_date = now().date()
+        # current_time = now().time()
 
         if DatabaseRouter.db_for_write() == 'default':
             print("if")
             db = DatabaseRouter.db_for_write(Patientreports)  # Use the default model
-            # serializer = Patient_save_report(data=request.data)
+            serializer = Patient_save_report(data=request.data)
             # print("serializer",serializer)
             # serializer["date"]=current_date
             # serializer["time"]=current_time
@@ -215,18 +215,15 @@ def patient_save_report(request):
 
             # Save the data in the default model
 
-            # if serializer.is_valid():
-            #     serializer.save(report_file=file_url, date=current_date, time=current_time)
-            #     return JsonResponse({
-            #         'status': 'successfully_added_Patient_report',
-            #         'file_url': file_url
-            #     }, status=201)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse({'status':'successfully_added_Patient_report'})
             if patient_details_id and pdf_file_path:
                 report = Patientreports.objects.create(
                     patient_details_id_id=patient_details_id,
                     report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/'+str(file_url),
-                    date=current_date,
-                    time=current_time
+                    date=serializer.data.date,
+                    time=serializer.data.time
                 )
                 report.save()
                 return JsonResponse({'status': 'report_created_successfully'}, status=200)
@@ -235,40 +232,64 @@ def patient_save_report(request):
             else:
                 return JsonResponse({'status': 'please_add_valid_id_or_valid_Report'}, status=400)
 
+
         elif DatabaseRouter.db_for_write() == 'fallback':
+
             print("else")
+
             db = DatabaseRouter.db_for_write(NewPatientreports)  # Use the fallback model
 
+            # Validate the request data
+
             serializer = newPatient_save_report(data=request.data)
-            print('serializer',serializer.data)
 
-            # Construct the S3 object key for the fallback model
-            # s3_object_key = f"endo_files/{patient_details_id}/{os.path.basename(pdf_file_path)}"
-            #
-            # # Upload file to S3
-            # file_url = upload_file_to_s3(pdf_file_path, settings.AWS_STORAGE_BUCKET_NAME, s3_object_key)
+            if serializer.is_valid():
 
-            # if "Error" in file_url:
-            #     return JsonResponse({"status": file_url}, status=500)
+                # Extract validated data
 
-            # Save the data in the fallback model
-            report = NewPatientreports.objects.create(
-                patient_details_id_id=patient_details_id,
-                report_file=file_url,
-                date=current_date,
-                time=current_time
-            )
-            report.save()
+                patient_details_id = serializer.validated_data['patient_details_id']
 
-            return JsonResponse({
-                'status': 'successfully_added_Patient_report',
-                'file_url': file_url
-            }, status=201)
+                report_file = serializer.validated_data['report_file']
 
-        else:
-            return JsonResponse({"status": "Database router error."}, status=500)
+                date = serializer.validated_data['date']  # Date from frontend
 
+                time = serializer.validated_data['time']  # Time from frontend
 
+                # Create the fallback record in the database
+
+                report = NewPatientreports.objects.create(
+
+                    patient_details_id=patient_details_id,
+
+                    report_file=report_file,
+
+                    date=date,
+
+                    time=time
+
+                )
+
+                report.save()
+
+                return JsonResponse({
+
+                    'status': 'successfully_added_Patient_report',
+
+                    'file_url': report.report_file.url  # Assuming file storage provides a `.url`
+
+                }, status=201)
+
+            else:
+
+                # Return error if serializer data is invalid
+
+                return JsonResponse({
+
+                    'status': 'please_add_valid_id_or_valid_Report',
+
+                    'errors': serializer.errors
+
+                }, status=400)
 
 
 
