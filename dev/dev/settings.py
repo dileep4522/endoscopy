@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 
-from django.conf.global_settings import MEDIA_URL
+from django.conf.global_settings import MEDIA_URL, STATIC_ROOT, CSRF_TRUSTED_ORIGINS
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -48,31 +48,47 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
+"http://127.0.0.1:8000",
     "http://localhost:3000",  # Frontend address
+    "http://localhost:8000",  # Frontend address
     "http://192.168.0.129",
     "http://192.168.29.74:3000",
     "http://192.168.29.44:3000",
     # "http://192.168.29.185",# Add other allowed origins if needed
 ]
 CORS_ALLOW_CREDENTIALS=True
+
+CORS_ALLOW_HEADERS=[
+    "content-type",
+    "Authorization",
+    "X-CSRFToken",
+
+
+]
+
+
+
+CSRF_TRUSTED_ORIGINS=["http://127.0.0.1:8000"]
+
+
 ROOT_URLCONF = 'dev.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            # os.path.join(BASE_DIR,'build')
+            os.path.join(BASE_DIR,'build')
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -155,6 +171,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = 'static/'
+STATICFILES_DIRS=[
+    os.path.join(BASE_DIR,'build/static')
+]
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,"media")
 
@@ -168,11 +189,13 @@ from decouple import config  # Optional, for managing environment variables
 
 
 
-AWS_ACCESS_KEY_ID = 'AKIAVRUVWVFCSQBD3LNO'
-AWS_SECRET_ACCESS_KEY = '5M5idAAN0hBxp3tdkn3A8wYcjdaxcZ7ePFT1syHg'
-AWS_STORAGE_BUCKET_NAME = 'samplebucketautomac2'
-AWS_S3_REGION_NAME = 'ap-south-1' # Update as needed
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+# AWS_ACCESS_KEY_ID = 'AKIAVRUVWVFCSQBD3LNO'
+# AWS_SECRET_ACCESS_KEY = '5M5idAAN0hBxp3tdkn3A8wYcjdaxcZ7ePFT1syHg'
+# AWS_STORAGE_BUCKET_NAME = 'samplebucketautomac2'
+# AWS_S3_REGION_NAME = 'ap-south-1' # Update as needed
+# AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+
+
 #
 # AWS_ACCESS_KEY_ID = config('AKIAVRUVWVFCSQBD3LNO')
 # AWS_SECRET_ACCESS_KEY = config('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')
