@@ -72,7 +72,7 @@ def sync_databases():
 
 
 
-def sync_databases1():
+def fallback_to_default():
     """Sync data from fallback to default database."""
 
     # Step 1: Sync `New_patient_details` from fallback to default

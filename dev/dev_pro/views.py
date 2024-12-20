@@ -1,4 +1,5 @@
 import os
+import time
 from asyncio import current_task
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -134,6 +135,88 @@ def patient_report_file(request):
     #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+# @api_view(['POST'])
+# def patient_save_report(request):
+#     # if request.user.is_authenticated:
+#     if request.method != 'POST':
+#         return JsonResponse({"status": "Method not allowed"}, status=405)
+#
+#     # Extract required fields from the request
+#     patient_details_id = request.data.get('patient_details_id')
+#     pdf_file_path1 = request.data.get('pdf_file_path')
+#     current_date = request.data.get('date')
+#     current_time = request.data.get('time')
+#
+#     # Debug print statements
+#     print('Received pdf_file_path:', pdf_file_path1)
+#     print('Received date:', current_date)
+#     print('Received time:', current_time)
+#
+#     # Validate required fields
+#     if not all([patient_details_id, pdf_file_path1, current_date, current_time]):
+#         return JsonResponse(
+#             {"status": "patient_details_id, pdf_file_path, date, and time are required."},
+#             status=400
+#         )
+#
+#     # Local file path
+#     file_path = os.path.join(r'C:/Users/DeLL/Downloads/', str(pdf_file_path1))
+#     print('Full local file path:', file_path)
+#
+#     # Check if the file exists locally
+#     if not os.path.exists(file_path):
+#         return JsonResponse({"status": "The provided file path does not exist."}, status=400)
+#
+#     # Upload file to S3 bucket
+#     s3_object_key = f"patients_{patient_details_id}_{pdf_file_path1}"
+#     print("S3 object key:", s3_object_key)
+#
+#     file_url = upload_file(file_path, "samplebucketautomac2", object_name=str(pdf_file_path1), region=None)
+#     print('File upload URL:', file_url)
+#
+#     # Handle S3 upload errors
+#     if "Error" in file_url:
+#         return JsonResponse({"status": file_url}, status=500)
+#
+#     # Determine the database to use
+#     database = DatabaseRouter.db_for_write()
+#     print("Database in use:", database)
+#
+#     # Database write operation
+#     try:
+#         if database == 'default':
+#             report = Patientreports.objects.create(
+#                 patient_details_id_id=patient_details_id,
+#                 report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/'+str(file_url),
+#                 date=current_date,
+#                 time=current_time
+#             )
+#         elif database == 'fallback':
+#             print("Using fallback database")
+#             report = NewPatientreports.objects.create(
+#                 patient_details_id_id=patient_details_id,
+#                 report_file=file_url,
+#                 date=current_date,
+#                 time=current_time
+#             )
+#         else:
+#             return JsonResponse({"status": "Database router error."}, status=500)
+#
+#         report.save()
+#
+#         return JsonResponse({
+#             'status': 'report_created_successfully',
+#             'file_url': file_url
+#         }, status=201)
+#
+#     except Exception as e:
+#         return JsonResponse({"status": f"Database write error: {str(e)}"}, status=500)
+#
+#
+#     # else:
+#     #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 @api_view(['POST'])
 def patient_save_report(request):
     # if request.user.is_authenticated:
@@ -161,21 +244,25 @@ def patient_save_report(request):
     # Local file path
     file_path = os.path.join(r'C:/Users/DeLL/Downloads/', str(pdf_file_path1))
     print('Full local file path:', file_path)
+    print('Full local file path:', type(file_path))
 
     # Check if the file exists locally
-    if not os.path.exists(file_path):
-        return JsonResponse({"status": "The provided file path does not exist."}, status=400)
+    # if not os.path.exists(file_path):
+    #     return JsonResponse({"status": "The provided file path does not exist."}, status=400)
 
     # Upload file to S3 bucket
     s3_object_key = f"patients_{patient_details_id}_{pdf_file_path1}"
     print("S3 object key:", s3_object_key)
-
-    file_url = upload_file(file_path, "samplebucketautomac2", object_name=str(pdf_file_path1), region=None)
-    print('File upload URL:', file_url)
+    try:
+        time.sleep(2)
+        file_url = upload_file(file_path, "samplebucketautomac2", object_name=str(pdf_file_path1), region=None)
+        print('File upload URL:', file_url)
+    except Exception as e:
+        print("s3 bucket exception",e)
 
     # Handle S3 upload errors
-    if "Error" in file_url:
-        return JsonResponse({"status": file_url}, status=500)
+    # if "Error" in file_url:
+    #     return JsonResponse({"status": file_url}, status=500)
 
     # Determine the database to use
     database = DatabaseRouter.db_for_write()
@@ -184,24 +271,54 @@ def patient_save_report(request):
     # Database write operation
     try:
         if database == 'default':
-            report = Patientreports.objects.create(
-                patient_details_id_id=patient_details_id,
-                report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/'+str(file_url),
-                date=current_date,
-                time=current_time
-            )
+            try:
+                report = Patientreports.objects.create(
+                    patient_details_id_id=patient_details_id,
+                    report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/'+str(file_url),
+                    date=current_date,
+                    time=current_time
+                )
+                report.save()
+            except Exception as e:
+                print("default db error ------> ", e)
+            # Assuming patient_details_id is a valid ID
+            # try:
+            #     patient_details_instance = Patientsdetails.objects.get(id=patient_details_id)
+            # except Patientsdetails.DoesNotExist:
+            #     return JsonResponse({"status": "Patient not found."}, status=404)
+            #
+            # # Now create the report, passing the patient instance
+            # try:
+            #     report = Patientreports.objects.create(
+            #         patient_details_id=patient_details_instance,  # Pass the instance, not just the ID
+            #         report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/' + str(file_url),
+            #         date=current_date,
+            #         time=current_time
+            #     )
+            #     report.save()
+            # except Exception as e:
+            #     print("Error saving report:", e)
+            #     return JsonResponse({"status": f"Error saving report: {str(e)}"}, status=500)
+
+
         elif database == 'fallback':
             print("Using fallback database")
-            report = NewPatientreports.objects.create(
-                patient_details_id_id=patient_details_id,
-                report_file=file_url,
-                date=current_date,
-                time=current_time
-            )
+            print("patient_details_id",patient_details_id)
+            try:
+                report = NewPatientreports.objects.create(
+                    patient_details_id=patient_details_id,
+                    report_file=file_path,
+                    date=current_date,
+                    time=current_time
+                )
+                report.save()
+            except Exception as e:
+                print("/////////////////////////////////",e)
+            print("report fLLBck",report)
         else:
             return JsonResponse({"status": "Database router error."}, status=500)
 
-        report.save()
+
 
         return JsonResponse({
             'status': 'report_created_successfully',
@@ -209,11 +326,14 @@ def patient_save_report(request):
         }, status=201)
 
     except Exception as e:
+        print('execption111111111111111   ',e)
         return JsonResponse({"status": f"Database write error: {str(e)}"}, status=500)
 
 
     # else:
     #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 
 
 # @api_view(['POST'])
@@ -426,7 +546,9 @@ def register_view(request):
     if request.method == 'POST':
         serializer = RegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            # serializer.save()
+            serializer.save(using='default')
+            serializer.save(using='fallback')
             return Response({"status": "User_created_successfully!"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

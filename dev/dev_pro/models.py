@@ -65,7 +65,7 @@ class NewPatientsdetails(models.Model):
 class NewPatientreports(models.Model):
     def nameFile(instance, filename):
         return '/'.join(['endo_files', str(instance.patient_details_id), filename])
-    patient_details_id = models.ForeignKey(NewPatientsdetails,on_delete=models.CASCADE)
+    patient_details_id = models.CharField(max_length=100)
     report_file = models.FileField(upload_to=nameFile,blank=True)
     date = models.DateField()
     time = models.TimeField()
@@ -74,8 +74,8 @@ class NewPatientreports(models.Model):
         return str(self.date)
 
 
-@receiver(post_save, sender=Patientsdetails)
-def signal(sender, instance, created, **kwargs):
-    if created:
-        print("instance",instance)
-        print("instance",instance.patient_email)
+# @receiver(post_save, sender=Patientsdetails)
+# def signal(sender, instance, created, **kwargs):
+#     if created:
+#         print("instance",instance)
+#         print("instance",instance.patient_email)
