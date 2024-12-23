@@ -72,7 +72,8 @@ def upload_file(file_name, bucket, object_name=None,region=None):
     print('s3_client',s3_client)
     try:
         response = s3_client.upload_file(file_name, bucket, object_name, ExtraArgs=extra_args)  #ExtraArgs=extra_args
-    except ClientError as e:
+    except Exception as e:
+        print("lllllllllll",e)
         logging.error(e)
         return False
     print('response',response)

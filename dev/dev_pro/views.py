@@ -254,7 +254,7 @@ def patient_save_report(request):
     s3_object_key = f"patients_{patient_details_id}_{pdf_file_path1}"
     print("S3 object key:", s3_object_key)
     try:
-        time.sleep(2)
+        # time.sleep(2)
         file_url = upload_file(file_path, "samplebucketautomac2", object_name=str(pdf_file_path1), region=None)
         print('File upload URL:', file_url)
     except Exception as e:
