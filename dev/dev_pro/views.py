@@ -1,6 +1,9 @@
+import json
 import os
 import time
 from asyncio import current_task
+
+import requests
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -25,6 +28,12 @@ import random
 from dev.database_router import DatabaseRouter
 from .serializers import LoginSerializer, ReportSerializers,PatientDetailSerializers,RegistrationSerializer,UserDetailsSerializer,EmailVerificationSerializer,PasswordUpdateSerializer
 from .utils import upload_file
+import boto3
+from botocore.exceptions import NoCredentialsError
+from django.core.mail import EmailMessage
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 
 
@@ -125,7 +134,7 @@ def patient_report_file(request):
         )
     else:
         return JsonResponse(
-            {"status": "No_reports_found_for_this_patient."},
+            {"file_not_found": "No_reports_found_for_this_patient."},
             status=status.HTTP_404_NOT_FOUND  # Correct usage of status code
         )
 
@@ -254,7 +263,7 @@ def patient_save_report(request):
     s3_object_key = f"patients_{patient_details_id}_{pdf_file_path1}"
     print("S3 object key:", s3_object_key)
     try:
-        # time.sleep(2)
+        time.sleep(2)
         file_url = upload_file(file_path, "samplebucketautomac2", object_name=str(pdf_file_path1), region=None)
         print('File upload URL:', file_url)
     except Exception as e:
@@ -688,4 +697,115 @@ class WorkersListAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
         # except Exception as e:
         #     print("eeeee",e)
+
+
+
+
+# class SendPDFEmailAPIView(APIView):
+#     def post(self, request):
+#         # Parse data from the request
+#         recipient_email = request.data.get('email')
+#         pdf_url = "https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/Venu_2024-12-2407_23_50.pdf"
+#
+#         if not recipient_email:
+#             return Response({"error": "Recipient email is required."}, status=status.HTTP_400_BAD_REQUEST)
+#
+#         # Download the file from S3 URL
+#         try:
+#             response = requests.get(pdf_url)
+#             response.raise_for_status()
+#             pdf_content = response.content
+#         except Exception as e:
+#             return Response({"error": f"Failed to fetch the PDF file. Error: {str(e)}"},
+#                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#
+#         # Send email with attachment
+#         try:
+#             email = EmailMessage(
+#                 subject="Your PDF File",
+#                 body="Please find the attached PDF file.",
+#                 to=[recipient_email],
+#             )
+#             email.attach("Venu_2024-12-2407_23_50.pdf", pdf_content, "application/pdf")
+#             email.send()
+#         except Exception as e:
+#             return Response({"error": f"Failed to send email. Error: {str(e)}"},
+#                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#
+#         return Response({"message": "Email sent successfully!"}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def send_email(request):
+    email = request.data.get('email')
+    name = request.data.get('name')
+    report_id = request.data.get('report_id')
+
+
+    s3_link_query=Patientreports.objects.get(id=report_id)
+    print("s3_link_query",s3_link_query)
+    print("s3_link_query",s3_link_query.report_file)
+
+
+
+    # s3_pdf_url = request.data.get('s3_pdf_url')  # Expecting the S3 URL in the request
+    # s3_pdf_url = "https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/Venu_2024-12-2407_23_50.pdf"  # Expecting the S3 URL in the request
+    s3_pdf_url = str(s3_link_query.report_file) # Expecting the S3 URL in the request
+
+    # if not email :
+    #     return Response({"status": "Email and S3 PDF URL are required."}, status=400)
+
+
+    try:
+        response = requests.get(s3_pdf_url)
+        response.raise_for_status()
+        pdf_content = response.content
+        pdf_filename = s3_pdf_url.split('/')[-1]
+    except requests.exceptions.RequestException as e:
+        return Response({"status": f"Failed to download PDF: {e}"}, status=500)
+
+        # Create email
+    # name="neeraj"
+    email_subject = 'Endoscopy Report'
+    email_body = f"""
+    <p>Dear {name},</p>
+    <p>We are sending you your endoscopy report as part of your recent medical examination. Please review the attached document at your earliest convenience.</p>
+    <p>Should you have any concerns, you may contact us at [+918726165268].</p>
+    <p>Thank you,</p>
+    <p>[Hospital Name]</p>
+    """
+
+    email_message = EmailMessage(
+        subject=email_subject,
+        body=email_body,
+        from_email=settings.EMAIL_HOST_USER,
+        to=[email],
+    )
+    email_message.content_subtype = 'html'  # Send as HTML
+    email_message.attach(pdf_filename, pdf_content, 'application/pdf')
+
+    # Send email
+    try:
+        email_message.send()
+    except Exception as e:
+        return Response({"status": f"Failed to send email: {e}"}, status=500)
+
+        # Update user's OTP
+        # try:
+        #     user_detail = User_details.objects.get(business_email=email)
+        #     # user_detail.otp = otp_code
+        #     user_detail.save()
+        # except User_details.DoesNotExist:
+        #     return Response({"status": "User details not found."}, status=404)
+
+    return Response({'status': 'PDF sent successfully'}, status=200)
+
+
+
+
+
+
+
+
+
 

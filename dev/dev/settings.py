@@ -67,6 +67,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://192.168.29.74:3000",
     "http://192.168.29.44:3000",
     "http://192.168.29.251:8000",
+    'http://192.168.29.133',
     # "http://192.168.29.185",# Add other allowed origins if needed
 ]
 CORS_ALLOW_CREDENTIALS=True
@@ -199,6 +200,25 @@ AWS_SECRET_ACCESS_KEY = '5M5idAAN0hBxp3tdkn3A8wYcjdaxcZ7ePFT1syHg'
 AWS_STORAGE_BUCKET_NAME = 'samplebucketautomac2'
 AWS_S3_REGION_NAME = 'ap-south-1' # Update as needed
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+
+
+
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "neerajpynam@gmail.com"
+EMAIL_HOST_PASSWORD = "tkekaspbkdfjanap"
+
+
+
+
+
+
+
 
 
 #
