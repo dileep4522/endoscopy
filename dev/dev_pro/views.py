@@ -2,7 +2,8 @@ import json
 import os
 import time
 from asyncio import current_task
-
+import cv2
+from django.http import StreamingHttpResponse
 import requests
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -12,6 +13,15 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.views import APIView
+
+import os
+import shutil
+import time
+from django.conf import settings
+from django.http import JsonResponse
+from rest_framework.decorators import api_view
+from .models import Patientreports, NewPatientreports
+# from .utils import DatabaseRouter, upload_file  # Assuming these utilities are defined
 
 from .models import *
 from .serializers import *
@@ -226,9 +236,132 @@ def patient_report_file(request):
 #     #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+# @api_view(['POST'])
+# def patient_save_report(request):
+#     # if request.user.is_authenticated:
+#     if request.method != 'POST':
+#         return JsonResponse({"status": "Method not allowed"}, status=405)
+#
+#     # Extract required fields from the request
+#     patient_details_id = request.data.get('patient_details_id')
+#     pdf_file_path1 = request.data.get('pdf_file_path')
+#     current_date = request.data.get('date')
+#     current_time = request.data.get('time')
+#
+#     # Debug print statements
+#     print('Received pdf_file_path:', pdf_file_path1)
+#     print('Received date:', current_date)
+#     print('Received time:', current_time)
+#
+#     # Validate required fields
+#     if not all([patient_details_id, pdf_file_path1, current_date, current_time]):
+#         return JsonResponse(
+#             {"status": "patient_details_id, pdf_file_path, date, and time are required."},
+#             status=400
+#         )
+#
+#     # Local file path
+#     file_path = os.path.join(r'C:/Users/DeLL/Downloads/', str(pdf_file_path1))
+#     destination_path = os.path.join(settings.MEDIA_ROOT, 'reports', str(pdf_file_path1))
+#
+#     print('Full local file path:', file_path)
+#     print('Full local file path:', type(file_path))
+#
+#     # Check if the file exists locally
+#     # if not os.path.exists(file_path):
+#     #     return JsonResponse({"status": "The provided file path does not exist."}, status=400)
+#
+#     # Upload file to S3 bucket
+#     s3_object_key = f"patients_{patient_details_id}_{pdf_file_path1}"
+#     print("S3 object key:", s3_object_key)
+#     try:
+#         time.sleep(2)
+#         file_url = upload_file(file_path, "samplebucketautomac2", object_name=str(pdf_file_path1), region=None)
+#         print('File upload URL:', file_url)
+#     except Exception as e:
+#         print("s3 bucket exception",e)
+#
+#     # Handle S3 upload errors
+#     # if "Error" in file_url:
+#     #     return JsonResponse({"status": file_url}, status=500)
+#
+#     # Determine the database to use
+#     database = DatabaseRouter.db_for_write()
+#     print("Database in use:", database)
+#
+#     # Database write operation
+#     try:
+#         if database == 'default':
+#             try:
+#                 report = Patientreports.objects.create(
+#                     patient_details_id_id=patient_details_id,
+#                     # report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/'+str(file_url),
+#                     report_file=file_path,
+#                     date=current_date,
+#                     time=current_time
+#                 )
+#                 report.save()
+#             except Exception as e:
+#                 print("default db error ------> ", e)
+#             # Assuming patient_details_id is a valid ID
+#             # try:
+#             #     patient_details_instance = Patientsdetails.objects.get(id=patient_details_id)
+#             # except Patientsdetails.DoesNotExist:
+#             #     return JsonResponse({"status": "Patient not found."}, status=404)
+#             #
+#             # # Now create the report, passing the patient instance
+#             # try:
+#             #     report = Patientreports.objects.create(
+#             #         patient_details_id=patient_details_instance,  # Pass the instance, not just the ID
+#             #         report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/' + str(file_url),
+#             #         date=current_date,
+#             #         time=current_time
+#             #     )
+#             #     report.save()
+#             # except Exception as e:
+#             #     print("Error saving report:", e)
+#             #     return JsonResponse({"status": f"Error saving report: {str(e)}"}, status=500)
+#
+#
+#         elif database == 'fallback':
+#             print("Using fallback database")
+#             print("patient_details_id",patient_details_id)
+#             try:
+#                 report = NewPatientreports.objects.create(
+#                     patient_details_id=patient_details_id,
+#                     report_file=file_path,
+#                     date=current_date,
+#                     time=current_time
+#                 )
+#                 report.save()
+#             except Exception as e:
+#                 print("/////////////////////////////////",e)
+#             print("report fLLBck",report)
+#         else:
+#             return JsonResponse({"status": "Database router error."}, status=500)
+#
+#
+#
+#         return JsonResponse({
+#             'status': 'report_created_successfully',
+#             'file_url': file_url
+#         }, status=201)
+#
+#     except Exception as e:
+#         print('execption111111111111111   ',e)
+#         return JsonResponse({"status": f"Database write error: {str(e)}"}, status=500)
+#
+#
+#     # else:
+#     #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+## above one
+
+
+
 @api_view(['POST'])
 def patient_save_report(request):
-    # if request.user.is_authenticated:
     if request.method != 'POST':
         return JsonResponse({"status": "Method not allowed"}, status=405)
 
@@ -238,7 +371,6 @@ def patient_save_report(request):
     current_date = request.data.get('date')
     current_time = request.data.get('time')
 
-    # Debug print statements
     print('Received pdf_file_path:', pdf_file_path1)
     print('Received date:', current_date)
     print('Received time:', current_time)
@@ -250,97 +382,69 @@ def patient_save_report(request):
             status=400
         )
 
-    # Local file path
-    file_path = os.path.join(r'C:/Users/DeLL/Downloads/', str(pdf_file_path1))
-    print('Full local file path:', file_path)
-    print('Full local file path:', type(file_path))
-
+    # Local file paths
+    source_path = os.path.join(r'C:/Users/DeLL/Downloads/', str(pdf_file_path1))
+    destination_path = os.path.join(settings.MEDIA_ROOT, 'reports', str(pdf_file_path1))
+    print('destination_path',destination_path)
+    print('source_path',source_path)
+    # time.sleep(2)
     # Check if the file exists locally
-    # if not os.path.exists(file_path):
-    #     return JsonResponse({"status": "The provided file path does not exist."}, status=400)
+    if not os.path.exists(source_path):
+        return JsonResponse({"status": "The provided file path does not exist."}, status=400)
 
-    # Upload file to S3 bucket
-    s3_object_key = f"patients_{patient_details_id}_{pdf_file_path1}"
-    print("S3 object key:", s3_object_key)
-    try:
-        time.sleep(2)
-        file_url = upload_file(file_path, "samplebucketautomac2", object_name=str(pdf_file_path1), region=None)
-        print('File upload URL:', file_url)
-    except Exception as e:
-        print("s3 bucket exception",e)
+    # Move the file to the media directory
+    os.makedirs(os.path.dirname(destination_path), exist_ok=True)
 
-    # Handle S3 upload errors
-    # if "Error" in file_url:
-    #     return JsonResponse({"status": file_url}, status=500)
+    shutil.copy(source_path, destination_path)
+    print('File moved to:', destination_path)
+
+    # Get the file URL
+    relative_path = f"/reports/{pdf_file_path1}"
+    print('relative_path',relative_path)
+    file_url = f"{request.scheme}://{request.get_host()}{relative_path}"
+
+    print("Generated file URL:", file_url)
 
     # Determine the database to use
     database = DatabaseRouter.db_for_write()
     print("Database in use:", database)
 
-    # Database write operation
     try:
         if database == 'default':
-            try:
-                report = Patientreports.objects.create(
-                    patient_details_id_id=patient_details_id,
-                    report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/'+str(file_url),
-                    date=current_date,
-                    time=current_time
-                )
-                report.save()
-            except Exception as e:
-                print("default db error ------> ", e)
-            # Assuming patient_details_id is a valid ID
-            # try:
-            #     patient_details_instance = Patientsdetails.objects.get(id=patient_details_id)
-            # except Patientsdetails.DoesNotExist:
-            #     return JsonResponse({"status": "Patient not found."}, status=404)
-            #
-            # # Now create the report, passing the patient instance
-            # try:
-            #     report = Patientreports.objects.create(
-            #         patient_details_id=patient_details_instance,  # Pass the instance, not just the ID
-            #         report_file='https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/' + str(file_url),
-            #         date=current_date,
-            #         time=current_time
-            #     )
-            #     report.save()
-            # except Exception as e:
-            #     print("Error saving report:", e)
-            #     return JsonResponse({"status": f"Error saving report: {str(e)}"}, status=500)
+            report = Patientreports.objects.create(
+                patient_details_id_id=patient_details_id,
+                report_file=relative_path,  # Save relative path
+                date=current_date,
+                time=current_time
+            )
+            # print('...hhhhhh.....',report.id)
 
-
+            report.save()
+            # print('........',report.id)
         elif database == 'fallback':
-            print("Using fallback database")
-            print("patient_details_id",patient_details_id)
-            try:
-                report = NewPatientreports.objects.create(
-                    patient_details_id=patient_details_id,
-                    report_file=file_path,
-                    date=current_date,
-                    time=current_time
-                )
-                report.save()
-            except Exception as e:
-                print("/////////////////////////////////",e)
-            print("report fLLBck",report)
+            report = NewPatientreports.objects.create(
+                patient_details_id=patient_details_id,
+                report_file=relative_path,  # Save relative path
+                date=current_date,
+                time=current_time
+            )
+            report.save()
         else:
             return JsonResponse({"status": "Database router error."}, status=500)
 
-
-
         return JsonResponse({
             'status': 'report_created_successfully',
-            'file_url': file_url
+            'file_url': file_url,
+            "report_id":report.id
         }, status=201)
 
     except Exception as e:
-        print('execption111111111111111   ',e)
+        print("Exception occurred while saving to database:", e)
         return JsonResponse({"status": f"Database write error: {str(e)}"}, status=500)
 
 
-    # else:
-    #     return JsonResponse({"status": "unauthorized_user"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 
 
 
@@ -534,6 +638,7 @@ def login_view(request):
             print("Password:",password)
 
             user = authenticate(username=username,password=password)
+            print("user",user)
 
             if user is not None:
                 login(request, user)
@@ -557,7 +662,7 @@ def register_view(request):
         if serializer.is_valid():
             # serializer.save()
             serializer.save(using='default')
-            serializer.save(using='fallback')
+            # serializer.save(using='fallback')
             return Response({"status": "User_created_successfully!"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -735,77 +840,200 @@ class WorkersListAPIView(APIView):
 #         return Response({"message": "Email sent successfully!"}, status=status.HTTP_200_OK)
 
 
+# @api_view(['POST'])
+# def send_email(request):
+#     email = request.data.get('email')
+#     name = request.data.get('name')
+#     report_id = request.data.get('report_id')
+#
+#     print('email',email)
+#     print('name',name)
+#     print('report_id',report_id)
+#
+#
+#
+#     s3_link_query=Patientreports.objects.get(id=report_id)
+#     print("s3_link_query",s3_link_query)
+#     print("s3_link_query",s3_link_query.report_file)
+#
+#
+#
+#     # s3_pdf_url = request.data.get('s3_pdf_url')  # Expecting the S3 URL in the request
+#     # s3_pdf_url = "https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/Venu_2024-12-2407_23_50.pdf"  # Expecting the S3 URL in the request
+#     pdf_url = str(s3_link_query.report_file) # Expecting the S3 URL in the request
+#
+#     # if not email :
+#     #     return Response({"status": "Email and S3 PDF URL are required."}, status=400)
+#
+#     print('pdf_url',pdf_url)
+#     print('pdf_url......','http://127.0.0.1:8000/media'+pdf_url)
+#
+#     # pdf_filename1 = s3_pdf_url.split('reports')
+#     # pdf_filename = pdf_filename1[1].split('/')[1]
+#     print('pdf_filename','http://127.0.0.1:8000/media'+pdf_url)
+#     base_url = "http://127.0.0.1:8000/media"
+#     full_pdf_url = base_url + pdf_url
+#     print('full_pdf_url',full_pdf_url)
+#
+#
+#
+#     # try:
+#     #     response = requests.get(pdf_url)
+#     #     response.raise_for_status()
+#     #     pdf_content = response.content
+#     #     # pdf_filename1 = pdf_url.split('reports')
+#     #     # pdf_filename = str(pdf_filename1[1].split('/')[1])
+#     #     # pdf_filename = 'http://127.0.0.1:8000/media'+pdf_url
+#     #
+#     #     pdf_filename = base_url + pdf_url
+#     #
+#     #     print('pdf_filename',pdf_filename)
+#     # except requests.exceptions.RequestException as e:
+#     #     return Response({"status": f"Failed to download PDF: {e}"}, status=500)
+#
+#     try:
+#         # Send a GET request to fetch the PDF
+#         response = requests.get(full_pdf_url)
+#         response.raise_for_status()  # Raise an error if the status is not 200
+#
+#         # Extract the PDF content
+#         pdf_content = response.content
+#
+#         # Extract the filename from the URL
+#         pdf_filename = pdf_url.split('/')[-1]
+#
+#         print("PDF Filename:", pdf_filename)
+#     except requests.exceptions.RequestException as e:
+#         print(f"Failed to download PDF: {e}")
+#         # Handle failure response
+#         # return Response({"status": f"Failed to download PDF: {e}"}, status=500)
+#
+#
+#
+#         # Create email
+#     # name="neeraj"
+#     email_subject = 'Endoscopy Report'
+#     email_body = f"""
+#     <p>Dear {name},</p>
+#     <p>We are sending you your endoscopy report as part of your recent medical examination. Please review the attached document at your earliest convenience.</p>
+#     <p>Should you have any concerns, you may contact us at [+918726165268].</p>
+#     <p>Thank you,</p>
+#     <p>[Hospital Name]</p>
+#     """
+#
+#     email_message = EmailMessage(
+#         subject=email_subject,
+#         body=email_body,
+#         from_email=settings.EMAIL_HOST_USER,
+#         to=[email],
+#     )
+#     email_message.content_subtype = 'html'  # Send as HTML
+#     email_message.attach(pdf_filename, pdf_content, 'application/pdf')
+#
+#     # Send email
+#     try:
+#         email_message.send()
+#     except Exception as e:
+#         return Response({"status": f"Failed to send email: {e}"}, status=500)
+#
+#         # Update user's OTP
+#         # try:
+#         #     user_detail = User_details.objects.get(business_email=email)
+#         #     # user_detail.otp = otp_code
+#         #     user_detail.save()
+#         # except User_details.DoesNotExist:
+#         #     return Response({"status": "User details not found."}, status=404)
+#
+#     return Response({'status': 'PDF sent successfully'}, status=200)
+
+
+
 @api_view(['POST'])
 def send_email(request):
+    # Extract data from request
     email = request.data.get('email')
     name = request.data.get('name')
     report_id = request.data.get('report_id')
 
+    if not all([email, name, report_id]):
+        return Response({"status": "Email, name, and report_id are required."}, status=400)
 
-    s3_link_query=Patientreports.objects.get(id=report_id)
-    print("s3_link_query",s3_link_query)
-    print("s3_link_query",s3_link_query.report_file)
+    # Fetch report from database
+    try:
+        report = Patientreports.objects.get(id=report_id)
+    except Patientreports.DoesNotExist:
+        return Response({"status": "Report not found."}, status=404)
 
-
-
-    # s3_pdf_url = request.data.get('s3_pdf_url')  # Expecting the S3 URL in the request
-    # s3_pdf_url = "https://samplebucketautomac2.s3.ap-south-1.amazonaws.com/Venu_2024-12-2407_23_50.pdf"  # Expecting the S3 URL in the request
-    s3_pdf_url = str(s3_link_query.report_file) # Expecting the S3 URL in the request
-
-    # if not email :
-    #     return Response({"status": "Email and S3 PDF URL are required."}, status=400)
-
+    # Construct full PDF URL
+    base_url = "http://127.0.0.1:8000/media"
+    pdf_url = f"{base_url}{report.report_file}"
+    pdf_filename = pdf_url.split('/')[-1]
 
     try:
-        response = requests.get(s3_pdf_url)
+        # Fetch PDF content
+        response = requests.get(pdf_url)
         response.raise_for_status()
         pdf_content = response.content
-        pdf_filename = s3_pdf_url.split('/')[-1]
     except requests.exceptions.RequestException as e:
         return Response({"status": f"Failed to download PDF: {e}"}, status=500)
 
-        # Create email
-    # name="neeraj"
-    email_subject = 'Endoscopy Report'
+    # Email content
+    email_subject = "Endoscopy Report"
     email_body = f"""
     <p>Dear {name},</p>
-    <p>We are sending you your endoscopy report as part of your recent medical examination. Please review the attached document at your earliest convenience.</p>
-    <p>Should you have any concerns, you may contact us at [+918726165268].</p>
+    <p>Please find your endoscopy report attached.</p>
+    <p>If you have any questions, feel free to contact us at [+918726165268].</p>
     <p>Thank you,</p>
     <p>[Hospital Name]</p>
     """
 
+    # Send email
     email_message = EmailMessage(
         subject=email_subject,
         body=email_body,
         from_email=settings.EMAIL_HOST_USER,
         to=[email],
     )
-    email_message.content_subtype = 'html'  # Send as HTML
-    email_message.attach(pdf_filename, pdf_content, 'application/pdf')
+    email_message.content_subtype = "html"  # HTML email
+    email_message.attach(pdf_filename, pdf_content, "application/pdf")
 
-    # Send email
     try:
         email_message.send()
     except Exception as e:
         return Response({"status": f"Failed to send email: {e}"}, status=500)
 
-        # Update user's OTP
-        # try:
-        #     user_detail = User_details.objects.get(business_email=email)
-        #     # user_detail.otp = otp_code
-        #     user_detail.save()
-        # except User_details.DoesNotExist:
-        #     return Response({"status": "User details not found."}, status=404)
-
-    return Response({'status': 'PDF sent successfully'}, status=200)
+    return Response({"status": "PDF sent successfully"}, status=200)
 
 
 
 
+def generate_frames():
+    # Open the camera
+    capture = cv2.VideoCapture(1)
+    # capture = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+
+    if not capture.isOpened():
+        raise RuntimeError("Error: Camera not accessible.")
+
+    while True:
+        success, frame = capture.read()
+        if not success:
+            break
+
+        # Encode the frame as JPEG
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+
+        # Yield the frame as part of the HTTP response
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 
 
 
+@api_view(['GET'])
 
+def video_feed(request):
+    # Use StreamingHttpResponse to stream the video feed
+    return StreamingHttpResponse(generate_frames(), content_type='multipart/x-mixed-replace; boundary=frame')
 

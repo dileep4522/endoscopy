@@ -37,6 +37,7 @@ urlpatterns = [
     path('cameronwillamson', TemplateView.as_view(template_name='index.html')),
     path('videocapturing', TemplateView.as_view(template_name='index.html')),
     path('selectpicture', TemplateView.as_view(template_name='index.html')),
-    path('exportreport', TemplateView.as_view(template_name='index.html'))
+    path('exportreport', TemplateView.as_view(template_name='index.html')),
+
 
 ]+static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
