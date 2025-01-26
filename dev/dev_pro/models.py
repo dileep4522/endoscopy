@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -72,6 +73,30 @@ class NewPatientreports(models.Model):
 
     def __str__(self):
         return str(self.date)
+
+
+
+
+
+
+
+
+class video_store(models.Model):
+    report_data_id=models.ForeignKey(Patientreports,on_delete=models.CASCADE)
+    video_file = models.CharField(max_length=500)
+
+    def __str__(self):
+        return str(self.video_file)
+
+
+class New_video_store(models.Model):
+    report_data_id = models.ForeignKey(NewPatientreports, on_delete=models.CASCADE)
+    video_file = models.CharField(max_length=500)
+
+    def __str__(self):
+        return str(self.video_file)
+
+
 
 
 # @receiver(post_save, sender=Patientsdetails)

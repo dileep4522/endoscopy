@@ -68,13 +68,19 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
 "http://127.0.0.1:8000",
     "http://localhost:3000",  # Frontend address
+    "http://127.0.0.1:3000",  # Frontend address
+    "http://localhost:3002",  # Frontend address
     "http://localhost:8000",  # Frontend address
     "http://192.168.0.129",
     "http://192.168.29.74:3000",
+    "http://192.168.29.16:3000",
+    "http://192.168.29.1:3000",
     "http://192.168.29.44:3000",
     "http://192.168.29.251:8000",
     'http://192.168.29.133',
 "http://192.168.29.74:3002",
+"http://192.168.29.16:3000",
+"http://172.20.10.4:3000",
     # "http://192.168.29.185",# Add other allowed origins if needed
 ]
 CORS_ALLOW_CREDENTIALS=True

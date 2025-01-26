@@ -5,10 +5,10 @@ import time
 # from .sync import fallback_to_default
 
 
-
+print("init.........")
 def scheduler_fallback_to_default():
     from .sync import fallback_to_default
-    # schedule.every(60).seconds.do(fallback_to_default)
+    # schedule.every(5).seconds.do(fallback_to_default)
     while True:
         schedule.run_pending()
         time.sleep(1)
@@ -21,7 +21,8 @@ if os.environ.get("RUN_MAIN") == "true":
 
 def run_scheduler():
     from .sync import sync_databases
-    # schedule.every(120).seconds.do(sync_databases)
+    print("sync_databases init")
+    # schedule.every(1).seconds.do(sync_databases)
     while True:
         schedule.run_pending()
         time.sleep(1)
