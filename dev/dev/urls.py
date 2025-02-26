@@ -39,6 +39,9 @@ urlpatterns = [
     path('selectpicture', TemplateView.as_view(template_name='index.html')),
     path('exportreport', TemplateView.as_view(template_name='index.html')),
     path('login', TemplateView.as_view(template_name='index.html')),
+    path('edituser', TemplateView.as_view(template_name='index.html')),
+    path('wifi', TemplateView.as_view(template_name='index.html')),
+    path('editpatient', TemplateView.as_view(template_name='index.html')),
 
 
 ]+static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)

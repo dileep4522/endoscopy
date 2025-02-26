@@ -1116,8 +1116,8 @@ def internet_test(request):
     try:
         socket.create_connection(("8.8.8.8", 53), timeout=3)
         return JsonResponse({"message": "connected"})
-    except Exception as e:
-        return JsonResponse({"message": "disconnected","status": str(e)})
+    except OSError:
+        return JsonResponse({"message": "disconnected"})
 
 
 @api_view(['POST'])
