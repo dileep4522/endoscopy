@@ -1111,6 +1111,17 @@ def patient_details_update(request):
         return JsonResponse({"status": "error", "message": str(e)})
 
 
+#new development
+@api_view(['GET'])
+def report_delete(request):
+    report_id = request.query_params.get("report_id")
+    try:
+        del_query=Patientreports.objects.get(id=report_id).delete()
+        return JsonResponse({"status": "report deleted sucessfully"})
+    except Exception as e:
+        return JsonResponse({"status": "invalid report id", "message": str(e)})
+
+
 @api_view(['GET'])
 def internet_test(request):
     try:

@@ -75,6 +75,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://192.168.29.74:3000",
     "http://192.168.29.16:3000",
     "http://192.168.29.1:3000",
+    "http://172.20.10.4:3000",
     "http://192.168.29.44:3000",
     "http://192.168.29.251:8000",
     'http://192.168.29.133',
@@ -129,8 +130,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
         'USER': 'postgres',
-        'PASSWORD': 'Sunil2662',
-        'HOST': 'ytdatabase.c98k4qo8soa0.ap-south-1.rds.amazonaws.com',
+        'PASSWORD': 'Automac150221',
+        'HOST': 'mydb.crmy2cqkg7j6.ap-south-1.rds.amazonaws.com',
         'PORT': '5432',
     },
     'fallback': {

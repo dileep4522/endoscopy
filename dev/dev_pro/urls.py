@@ -22,5 +22,6 @@ urlpatterns = [
     path('patient_details_update/', patient_details_update, name='patient_details_update'),
     path('internet_test/', internet_test, name='internet_test'),
     path('wifi_test_rpi/', wifi_test_rpi, name='wifi_test_rpi'),
+    path('report_delete/', report_delete, name='report_delete'),
 
 ]

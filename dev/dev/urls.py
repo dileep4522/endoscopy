@@ -34,7 +34,8 @@ urlpatterns = [
     path('headersetting', TemplateView.as_view(template_name='index.html')),
     path('hospital', TemplateView.as_view(template_name='index.html')),
     path('allpatients', TemplateView.as_view(template_name='index.html')),
-    path('cameronwillamson', TemplateView.as_view(template_name='index.html')),
+    # path('cameronwillamson', TemplateView.as_view(template_name='index.html')),
+    path('cameronwillamson/<str:patient_name>/', TemplateView.as_view(template_name='index.html')),
     path('videocapturing', TemplateView.as_view(template_name='index.html')),
     path('selectpicture', TemplateView.as_view(template_name='index.html')),
     path('exportreport', TemplateView.as_view(template_name='index.html')),
@@ -45,3 +46,5 @@ urlpatterns = [
 
 
 ]+static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
+
+
