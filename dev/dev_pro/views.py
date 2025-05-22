@@ -20,6 +20,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
+
+from . import wifi_code
 from .models import User, UserDetails  # Replace with your actual model imports
 import os
 import shutil
@@ -613,13 +615,15 @@ def login_view(request):
                 print('user_data',user_data)
                 userdetails=UserDetails.objects.get(user_id=user.id)
                 print('userdetails',userdetails)
+                print(".................",user_data.first_name)
 
                 result={
                     "user_id": user.id,
                     "username":user_data.username,
                     "email": user_data.email,
                     "mobile_no": userdetails.mobile_no,
-                    "Speciality": userdetails.speciality
+                    "Speciality": userdetails.speciality,
+                    "first_name":user_data.first_name
                 }
                 print('result',result)
 
@@ -1011,6 +1015,7 @@ def user_details_update(request):
         email = request.data.get('email')
         mobile = request.data.get('mobile_no')
         speciality = request.data.get('Speciality')
+        firstname = request.data.get('first_name')
 
         # Validate required fields
         if not all([user_id, username, email, mobile, speciality]):
@@ -1024,6 +1029,7 @@ def user_details_update(request):
             user = User.objects.get(id=user_id)
             user.username = username
             user.email = email
+            user.first_name = firstname
             user.save()
 
             # Update or create related user details
@@ -1032,7 +1038,11 @@ def user_details_update(request):
                 defaults={"mobile_no": mobile, "speciality": speciality}
             )
 
-            return JsonResponse({"status": "success", "message": "User details updated successfully."})
+            return JsonResponse({"status": "success",
+                                 "message": "User details updated successfully.",
+                                 "edited_data":{"user_id": user_id, "username": username, "email": email, "mobile_no": mobile,
+                                  "Speciality": speciality, "first_name": firstname}
+                                 })
 
         except ObjectDoesNotExist:
             return Response({"status": "Error", "message": "User not found."}, status=404)
@@ -1135,12 +1145,24 @@ def internet_test(request):
 def wifi_test_rpi(request):
     sid_data=request.data.get('sid')
     password_data=request.data.get('password')
-    wifi_con_status = True
     try:
+        wifi_con_status = wifi_code.connect_to_wifi(sid_data, password_data)
         if wifi_con_status:
             return JsonResponse({"message": "connected"})
+        else:
+            return JsonResponse({"message": "failed to connect"}, status=500)
     except Exception as e:
-        return JsonResponse({"message": "disconnected","status": str(e)})
+        return JsonResponse({"message": "error", "details": str(e)}, status=500)
+
+
+
+    # wifi_code.connect_to_wifi(sid_data, password_data)
+    # wifi_con_status = True
+    # try:
+    #     if wifi_con_status:
+    #         return JsonResponse({"message": "connected"})
+    # except Exception as e:
+    #     return JsonResponse({"message": "disconnected","status": str(e)})
 
 def generate_frames():
     # Open the camera
